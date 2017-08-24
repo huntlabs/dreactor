@@ -1,0 +1,11 @@
+{
+    "name": "echoclient",
+	"targetType":"executable",
+    "license": "Apache-2.0",
+	"dependencies":{
+		"dreactor":{
+			"path" :"../../"
+		}
+	}
+
+}
