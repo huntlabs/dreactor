@@ -36,10 +36,10 @@ final class stNodeLink
 	WheelType			_type;
 	uint64_t			_interval;
 	uint64_t			_tick;			
-	Timer				_tm;
-	this( Timer tm, uint64_t interval ,WheelType type) 
+	TimerFunc			_func;
+	this( TimerFunc func, uint64_t interval ,WheelType type) 
 	{ 
-		_tm = tm;
+		_func = func;
 		_interval = interval;
 		_type = type;
 
@@ -182,9 +182,8 @@ final class WheelTimer
 			while(link != spoke){
 				tmp = link._next;
 				link._next = link._prev = link;
-					
-				if(link._tm.onTimer(link ,_checktime) && 
-					link._type == WheelType.WHEEL_PERIODIC)
+				link._func(link ,_checktime);
+				if( link._type == WheelType.WHEEL_PERIODIC)
 				{
 					add(link);
 				}
@@ -218,8 +217,8 @@ final class WheelTimer
 			tmp = link._next;
 			link._next = link._prev = link;
 			if (link._tick <= _checktime) {
-				if(link._tm.onTimer(link , _checktime) && 
-					link._type == WheelType.WHEEL_PERIODIC)
+				link._func(link , _checktime);
+				if( link._type == WheelType.WHEEL_PERIODIC)
 				{
 					log_info("interval:" ~ to!string(link._interval));
 					add(link);

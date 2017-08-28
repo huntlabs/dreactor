@@ -219,9 +219,9 @@ final class Select : Thread , Poll
 	}
 
 
-	TimerFd addTimer(Timer timer , ulong interval , WheelType type)
+	TimerFd addTimer(TimerFunc func , ulong interval , WheelType type)
 	{
-		stNodeLink st = new stNodeLink(timer , interval ,type);
+		stNodeLink st = new stNodeLink(func , interval ,type);
 		_wheeltimer.add(st);
 		return st;
 	}

@@ -20,7 +20,7 @@ interface Poll
 
 	bool poll(int milltimeout);
 
-	TimerFd addTimer(Timer timer , ulong interval , WheelType type);
+	TimerFd addTimer(TimerFunc func , ulong interval , WheelType type);
 	void delTimer(TimerFd fd);
 
 	void addFunc(PollFunc func);

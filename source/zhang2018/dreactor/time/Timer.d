@@ -14,7 +14,5 @@ enum WheelType{
 	WHEEL_PERIODIC,
 };
 
-interface Timer
-{
-	bool onTimer(TimerFd fd , ulong ticks);
-}
+
+alias TimerFunc = void delegate(TimerFd fd , ulong ticks);

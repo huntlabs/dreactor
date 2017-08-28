@@ -17,7 +17,7 @@ import std.socket;
 import std.conv;
 import std.random;
 
-class AsyncTcpClient:AsyncTcpBase,Timer
+class AsyncTcpClient:AsyncTcpBase
 {
 
 	//public function below
@@ -71,15 +71,9 @@ class AsyncTcpClient:AsyncTcpBase,Timer
 		return doEstablished();
 	}
 
-	override protected bool onTimer(TimerFd fd , ulong ticks) {
-
-		if(fd == _reconnect)
-		{
-			log_warning("timer to reconnecting " , _host , " " , _port);
-			open(_host , _port); 
-			return true;
-		}
-		return true;
+	void  onReconnect(TimerFd fd , ulong ticks) {
+		log_warning("timer to reconnecting " , _host , " " , _port);
+		open(_host , _port); 
 	}
 
 	public override int doWrite(byte[] writebuf , Object ob , TcpWriteFinish finish )
@@ -131,7 +125,7 @@ class AsyncTcpClient:AsyncTcpBase,Timer
 		{
 			if(_reconnect !is null)
 				poll.delTimer(_reconnect);
-			_reconnect = poll.addTimer(this , 5 * 1000 , WheelType.WHEEL_ONESHOT);
+			_reconnect = poll.addTimer(&onReconnect , 3 * 1000 , WheelType.WHEEL_ONESHOT);
 		}
 		return _free;
 	}
