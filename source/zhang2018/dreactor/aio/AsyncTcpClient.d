@@ -71,12 +71,12 @@ class AsyncTcpClient:AsyncTcpBase
 		return doEstablished();
 	}
 
-	void  onReconnect(TimerFd fd , ulong ticks) {
+	void  onReconnect(TimerFd fd ) {
 		log_warning("timer to reconnecting " , _host , " " , _port);
 		open(_host , _port); 
 	}
 
-	public override int doWrite(byte[] writebuf , Object ob , TcpWriteFinish finish )
+	public override int doWrite(const byte[] writebuf , Object ob , TcpWriteFinish finish )
 	{
 		if(_status != Connect_Status.CLIENT_CONNECTED)
 		{
@@ -121,10 +121,11 @@ class AsyncTcpClient:AsyncTcpBase
 
 		_status = Connect_Status.CLIENT_UNCONNECTED;
 
+		if(_reconnect !is null)
+			poll.delTimer(_reconnect);
+
 		if(isReconnected && !_free)
 		{
-			if(_reconnect !is null)
-				poll.delTimer(_reconnect);
 			_reconnect = poll.addTimer(&onReconnect , 3 * 1000 , WheelType.WHEEL_ONESHOT);
 		}
 		return _free;

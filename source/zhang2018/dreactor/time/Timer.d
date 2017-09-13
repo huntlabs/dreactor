@@ -15,4 +15,4 @@ enum WheelType{
 };
 
 
-alias TimerFunc = void delegate(TimerFd fd , ulong ticks);
+alias TimerFunc = void delegate(TimerFd fd);

@@ -72,9 +72,9 @@ final private class stWheel
 
 final class WheelTimer
 {
-	stWheel[WHEEL_NUM] 		_st;
+	stWheel[WHEEL_NUM] 			_st;
 	static immutable  uint64_t 	_tick_per_mill;
-	uint64_t				_checktime;
+	uint64_t					_checktime;
 
 	static this()
 	{
@@ -131,10 +131,10 @@ final class WheelTimer
 			interval = st._tick - now;
 		}
 
-		uint64_t threshold1 = WHEEL_SIZE1;
-		uint64_t threshold2 = 1 << (WHEEL_BITS1 + WHEEL_BITS2);
-		uint64_t threshold3 = 1 << (WHEEL_BITS1 + 2 * WHEEL_BITS2);
-		uint64_t threshold4 = 1 << (WHEEL_BITS1 + 3 * WHEEL_BITS2);
+		int64_t threshold1 = WHEEL_SIZE1;
+		int64_t threshold2 = 1 << (WHEEL_BITS1 + WHEEL_BITS2);
+		int64_t threshold3 = 1 << (WHEEL_BITS1 + 2 * WHEEL_BITS2);
+		int64_t threshold4 = 1 << (WHEEL_BITS1 + 3 * WHEEL_BITS2);
 		uint32_t index;
 	
 		if (interval < threshold1) {
@@ -142,23 +142,18 @@ final class WheelTimer
 				interval = 0;
 			index = (interval + _st[0]._spokeindex) & WHEEL_MASK1;
 			spoke = _st[0]._spokes[index];
-
 		} else if (interval < threshold2) {
 			index = ((interval - threshold1 + _st[1]._spokeindex * threshold1) >> WHEEL_BITS1) & WHEEL_MASK2;
 			spoke = _st[1]._spokes [ index];
-
 		} else if (interval < threshold3) {
 			index = ((interval - threshold2 + _st[2]._spokeindex * threshold2) >> (WHEEL_BITS1 + WHEEL_BITS2)) & WHEEL_MASK2;
 			spoke = _st[2]._spokes [ index];
-
 		} else if (interval < threshold4) {
 			index = ((interval - threshold3 + _st[3]._spokeindex * threshold3) >> (WHEEL_BITS1 + 2 * WHEEL_BITS2)) & WHEEL_MASK2;
 			spoke = _st[3]._spokes [ index];
-
 		} else {
 			index = ((interval - threshold4 + _st[4]._spokeindex * threshold4) >> (WHEEL_BITS1 + 3 * WHEEL_BITS2)) & WHEEL_MASK2;
 			spoke = _st[4]._spokes [ index];
-		
 		}
 
 		st._prev = spoke._prev;
@@ -174,7 +169,7 @@ final class WheelTimer
 		stWheel wheel =  _st[0];
 		for(uint32_t i = 0 ; i < loopnum ; ++i)
 		{
-			stNodeLink spoke = wheel._spokes [wheel._spokeindex];
+			stNodeLink spoke = wheel._spokes [wheel._spokeindex++];
 			stNodeLink link = spoke._next;
 			stNodeLink tmp;
 			//clear all
@@ -182,14 +177,14 @@ final class WheelTimer
 			while(link != spoke){
 				tmp = link._next;
 				link._next = link._prev = link;
-				link._func(link ,_checktime);
+				link._func(link);
 				if( link._type == WheelType.WHEEL_PERIODIC)
 				{
 					add(link);
 				}
 				link = tmp;
 			}
-			if( ++wheel._spokeindex >= wheel._spokes.length)
+			if( wheel._spokeindex >= wheel._spokes.length)
 			{
 				wheel._spokeindex = 0;
 				Cascade(1);
@@ -200,7 +195,7 @@ final class WheelTimer
 
 
 
-	uint32_t Cascade(uint32_t wheelindex)
+	int Cascade(uint32_t wheelindex)
 	{
 		if (wheelindex < 1 || wheelindex >= WHEEL_NUM) {
 			return 0;
@@ -217,7 +212,7 @@ final class WheelTimer
 			tmp = link._next;
 			link._next = link._prev = link;
 			if (link._tick <= _checktime) {
-				link._func(link , _checktime);
+				link._func(link);
 				if( link._type == WheelType.WHEEL_PERIODIC)
 				{
 					log_info("interval:" ~ to!string(link._interval));

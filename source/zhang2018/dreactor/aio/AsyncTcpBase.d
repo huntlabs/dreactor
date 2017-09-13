@@ -44,7 +44,7 @@ class AsyncTcpBase:Event
 	// 1  		suc
 	// -1		failed
 
-	public int doWrite(byte[] writebuf , Object ob , TcpWriteFinish finish )
+	public int doWrite(const byte[] writebuf , Object ob , TcpWriteFinish finish )
 	{
 		synchronized(this){
 
@@ -57,7 +57,7 @@ class AsyncTcpBase:Event
 				}
 				else if(ret > 0)
 				{
-					QueueBuffer buffer = {writebuf , ob , cast(int)ret , finish};
+					QueueBuffer buffer = {writebuf, ob , cast(int)ret , finish};
 					_writebuffer.insertBack(buffer);
 				
 					schedule_write();
@@ -99,7 +99,8 @@ class AsyncTcpBase:Event
 
 	public bool open()
 	{
-		_accepttime = cast(int)time(null);
+		_opentime = cast(int)time(null);
+		_lastMsgTime = _opentime;
 		_remoteipaddr = _socket.remoteAddress.toAddrString();
 		return onEstablished();
 	}
@@ -171,13 +172,14 @@ class AsyncTcpBase:Event
 	protected bool onRead()
 	{
 		long ret = _socket.receive(_readbuffer);
+		_lastMsgTime = cast(int)time(null);
 		if(ret > 0)
 		{
 			return doRead(_readbuffer , cast(int)ret);
 		}
 		if(ret == 0) 
 		{	
-			//log(LogLevel.info , "peer close socket");
+			log_info("peer close socket " , _socket.handle );
 			return false;
 		}
 		else if(ret == -1 && net_error())
@@ -197,8 +199,6 @@ class AsyncTcpBase:Event
 
 	protected bool doRead(byte[] data , int length)
 	{
-		_lastMsgTime = cast(int)time(null);
-		log_info( to!string(length));
 		return true;
 	}
 
@@ -246,11 +246,12 @@ class AsyncTcpBase:Event
 
 	private struct QueueBuffer
 	{
-		byte[] 			buffer;
+		const byte[] 	buffer;
 		Object 			ob;
 		int	   			index;
 		TcpWriteFinish	finish;
 	}
+
 
 
 	//static function's below
@@ -274,7 +275,7 @@ class AsyncTcpBase:Event
 	protected IOEventType 	_curEventType = IOEventType.IO_EVENT_NONE;
 	
 
-	protected uint			_accepttime;
+	protected uint			_opentime;
 	protected uint			_lastMsgTime;
 	protected string		_remoteipaddr;
 

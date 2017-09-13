@@ -226,7 +226,10 @@ final class Epoll :Thread , Poll
 		{
 			int err = errno();
 			if(err == EINTR)
+			{	
+			
 				return true;
+			}
 
 			string errstr = cast(string)fromStringz(strerror(err));
 			log_fatal(errstr ~ " errno:" ~ to!string(err));
@@ -255,6 +258,9 @@ final class Epoll :Thread , Poll
 
 			if(mask &( EPOLL_EVENTS.EPOLLERR | EPOLL_EVENTS.EPOLLHUP))
 			{
+				auto err = errno();
+				string errstr = cast(string)fromStringz(strerror(err));
+				log_error(err , " epoll error " , errstr);
 				if(event.onClose())
 					delete event;
 				continue;
