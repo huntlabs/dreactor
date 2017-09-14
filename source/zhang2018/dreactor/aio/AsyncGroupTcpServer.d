@@ -32,6 +32,20 @@ class AsyncGroupTcpServer(T , A ...)
 		return true;
 	}
 
+	version(DREACTOR_OPENSSL)
+	{
+		bool enable_ssl(string pem_path , string passwd = string.init , string ca_path = string.init)
+		{
+			for(int i = 0 ; i < _servers.length ; i++)
+			{	
+				if(!_servers[i].enable_ssl(pem_path , passwd ,ca_path))
+					return false;
+			}
+
+			return true;
+		}
+	}
+
 	void close()
 	{
 		for(int i = 0 ; i < _servers.length ; i++)

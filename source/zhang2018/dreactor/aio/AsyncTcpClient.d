@@ -12,6 +12,11 @@ import zhang2018.dreactor.event.Poll;
 import zhang2018.dreactor.event.Event;
 import zhang2018.common.Log;
 
+version(DREACTOR_OPENSSL)
+{
+	import deimos.openssl.ssl;
+}
+
 import std.string;
 import std.socket;
 import std.conv;
@@ -21,18 +26,43 @@ class AsyncTcpClient:AsyncTcpBase
 {
 
 	//public function below
-
-	this(Group poll , int reconnecttime = 5 * 1000)
+	version(DREACTOR_OPENSSL)
 	{
-		int l = cast(int)poll.polls().length;
-		int r = uniform(0 , l);
-		this(poll.polls[r] , reconnecttime );
+		this(Group poll , int reconnecttime = 5 * 1000 , bool ssl = false )
+		{
+			int l = cast(int)poll.polls().length;
+			int r = uniform(0 , l);
+			this(poll.polls[r] , reconnecttime , ssl);
+		}
+		
+		this(Poll poll , int reconnecttime = 5 * 1000 , bool ssl = false)
+		{
+			super(poll);
+			_reconnecttime = reconnecttime;
+			if(ssl)
+				_ssl_ctx = SSL_CTX_new(SSLv23_client_method());
+			_clientSide = true;
+		}
+
+		~this()
+		{
+			SSL_CTX_free(_ssl_ctx);
+		}
 	}
-
-	this(Poll poll , int reconnecttime = 5 * 1000)
+	else
 	{
-		super(poll);
-		_reconnecttime = reconnecttime;
+		this(Group poll , int reconnecttime = 5 * 1000 )
+		{
+			int l = cast(int)poll.polls().length;
+			int r = uniform(0 , l);
+			this(poll.polls[r] , reconnecttime );
+		}
+
+		this(Poll poll , int reconnecttime = 5 * 1000)
+		{
+			super(poll);
+			_reconnecttime = reconnecttime;
+		}
 	}
 
 	bool open(string host , ushort port)
@@ -78,6 +108,16 @@ class AsyncTcpClient:AsyncTcpBase
 
 	public override int doWrite(const byte[] writebuf , Object ob , TcpWriteFinish finish )
 	{
+		version(DREACTOR_OPENSSL)
+		{
+			if(_ssl_ctx != null && _ssl_status == false)
+			{
+				log_error("ssl not shakedone");
+				return -1;
+			}
+
+		}
+
 		if(_status != Connect_Status.CLIENT_CONNECTED)
 		{
 			log_error("unconnected to the host");

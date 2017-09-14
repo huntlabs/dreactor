@@ -12,7 +12,14 @@ import zhang2018.dreactor.aio.Acceptor;
 import zhang2018.dreactor.aio.AsyncTcpBase;
 import zhang2018.dreactor.event.GroupPoll;
 
+import zhang2018.common.Log;
+
+version(DREACTOR_OPENSSL){
+	import deimos.openssl.ssl;
+}
+
 import std.socket;
+import std.string;
 
 
 final class AsyncTcpServer( T , A...): Event
@@ -38,6 +45,58 @@ final class AsyncTcpServer( T , A...): Event
 		return true;
 	}
 
+	version(DREACTOR_OPENSSL)
+	{
+		bool enable_ssl(string pem_path , string passwd = string.init , string ca_path = string.init)
+		{
+			_ssl_ctx = SSL_CTX_new(SSLv23_method());
+			if(_ssl_ctx == null)
+			{
+				log_error("SSL_CTX_new");
+				return false;
+			}
+
+			if(ca_path != "")
+			{
+				if(SSL_CTX_load_verify_locations(_ssl_ctx , toStringz(ca_path) , null) <= 0)
+				{
+					log_error("SSL_CTX_load_verify_locations ca_path " , ca_path);
+					return false;
+				}
+			}
+
+			if(pem_path != "")
+			{
+				if (SSL_CTX_use_certificate_file(_ssl_ctx, toStringz(pem_path), SSL_FILETYPE_PEM) <= 0)
+				{
+					log_error("SSL_CTX_use_certificate_file pem_path");
+					return false;
+				}
+
+
+				if (passwd != null)
+				{
+					SSL_CTX_set_default_passwd_cb_userdata(_ssl_ctx, cast(void *)toStringz(passwd));
+				}
+				
+				if (SSL_CTX_use_PrivateKey_file(_ssl_ctx, toStringz(pem_path), SSL_FILETYPE_PEM) <= 0)
+				{
+					log_error("SSL_CTX_use_PrivateKey_file pem_path");
+					return false;
+				}
+				
+				if (!SSL_CTX_check_private_key(_ssl_ctx))
+				{
+					log_error("SSL_CTX_check_private_key ");
+					return false;
+				}
+
+			}
+
+			return true;
+		}
+	}
+
 
 	void close()
 	{
@@ -61,6 +120,13 @@ final class AsyncTcpServer( T , A...): Event
 		Socket socket = _acceptor.accept();
 		socket.blocking(false);
 		t.setSocket(socket);
+		version(DREACTOR_OPENSSL)
+		{
+			if(_ssl_ctx)
+			{
+				t.setSSL(_ssl_ctx);
+			}
+		}
 		return t.open();
 	}
 
@@ -74,5 +140,9 @@ final class AsyncTcpServer( T , A...): Event
 	protected Poll	   			_poll;
 	protected Acceptor 			_acceptor;
 	protected A					_args;
+	version(DREACTOR_OPENSSL)
+	{
+		protected SSL_CTX*		_ssl_ctx = null;
+	}
 }
 

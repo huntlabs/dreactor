@@ -8,6 +8,9 @@ import std.stdio;
 import std.string;
 import std.conv;
 
+
+import zhang2018.dreactor.openssl.Callback;
+
 class MyHttpChannel : AsyncTcpBase
 {
 	this(Poll poll)
@@ -137,9 +140,10 @@ int main()
 	log_info("log_info");
 	log_error("log_error");
 	log_debug("log_debug1");
-
+	init_openssl_lib();
 	auto poll = new GroupPoll!();
 	auto server = new AsyncGroupTcpServer!MyHttpChannel(poll);
+	server.enable_ssl("putao.com.pem");
 	server.open("0.0.0.0" , 81);
 
 	poll.start();
