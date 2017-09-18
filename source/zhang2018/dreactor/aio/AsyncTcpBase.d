@@ -45,6 +45,24 @@ class AsyncTcpBase:Event
 
 	}
 
+	version(DREACTOR_OPENSSL)
+	{
+
+
+		void doWrite_proxy_ssl(Object ob)
+		{
+			ProxySSL proxy = cast(ProxySSL)ob;
+			if(++proxy.cur_suc == proxy.max_suc)
+			{
+				proxy.origin_cb(proxy.origin_ob);
+			}
+
+		}
+
+	}
+
+
+
 	public int doWrite(const byte[] writebuf , Object ob , TcpWriteFinish finish)
 	{
 		synchronized(this){
@@ -52,14 +70,28 @@ class AsyncTcpBase:Event
 			{
 				if(_ssl_ctx)
 				{
-		
+
+					_proxy = new ProxySSL(finish , ob);
 					int ret = SSL_write(_ssl , writebuf.ptr , cast(int)writebuf.length);
+					//finish 
 					if(ret != writebuf.length)
 					{
 						log_error("ssl_write error ret: " , ret , " len: " ,  writebuf.length);
-						return false;
+						return -1;
 					}
-					return true;
+
+					if(_proxy.cur_suc == _proxy.max_suc)
+					{
+						delete _proxy;
+						return 1;
+					}
+					else
+					{
+						return 0;
+					}
+
+			
+		
 				}
 				else
 				{
@@ -91,6 +123,7 @@ class AsyncTcpBase:Event
 				}
 				else if(ret > 0)
 				{
+					log_info("ret " , ret , " " , writebuf.length);
 					QueueBuffer buffer = {writebuf, ob , cast(int)ret , finish};
 					_writebuffer.insertBack(buffer);
 				
@@ -114,7 +147,7 @@ class AsyncTcpBase:Event
 			}
 			else
 			{
-				QueueBuffer buffer = {writebuf , ob , 0};
+				QueueBuffer buffer = {writebuf , ob , 0 , finish};
 				_writebuffer.insertBack(buffer);
 			}	
 
@@ -137,11 +170,6 @@ class AsyncTcpBase:Event
 		_lastMsgTime = _opentime;
 		_remoteipaddr = _socket.remoteAddress.toAddrString();
 
-		scope(exit)
-		{
-			_poll.addEvent(this ,_socket.handle ,  _curEventType = IOEventType.IO_EVENT_READ);
-		}
-
 		version(DREACTOR_OPENSSL)
 		{
 			if(_ssl_ctx)
@@ -161,7 +189,15 @@ class AsyncTcpBase:Event
 				{
 					SSL_set_accept_state(_ssl);
 				}
-				return ssl_handshake();
+
+				bool flag = ssl_handshake();
+
+				if(_clientSide)
+					poll.modEvent(this ,_socket.handle , _curEventType =  IOEventType.IO_EVENT_READ);
+				else
+				   _poll.addEvent(this ,_socket.handle ,  _curEventType = IOEventType.IO_EVENT_READ);	
+				
+				return flag;
 			}
 			else
 			{
@@ -219,6 +255,8 @@ class AsyncTcpBase:Event
 				_bio.method.bread = &openssl_cb_read;
 				SSL_set_bio(_ssl , _bio , _bio);
 
+				//
+
 				return onEstablished();
 			}
 			else if( r < 0)
@@ -259,7 +297,15 @@ class AsyncTcpBase:Event
 
 	protected bool onEstablished()
 	{
-
+		version(DREACTOR_OPENSSL)
+		{
+			if(_ssl_ctx == null)
+				_poll.addEvent(this ,_socket.handle ,  _curEventType = IOEventType.IO_EVENT_READ); 
+		}
+		else
+		{
+			_poll.addEvent(this ,_socket.handle ,  _curEventType = IOEventType.IO_EVENT_READ); 
+		}
 		return doEstablished();
 	}
 
@@ -405,8 +451,7 @@ class AsyncTcpBase:Event
 			}
 		}
 
-
-
+		_isreadclose = false;
 		_poll.delEvent(this , _socket.handle , _curEventType = IOEventType.IO_EVENT_NONE);
 		_socket.close();
 		return true;
@@ -492,11 +537,29 @@ class AsyncTcpBase:Event
 	{
 		SSL_CTX*				_ssl_ctx	= null;
 		SSL*					_ssl		= null; 
-		protected bool			_useSSL		= false;
 		protected bool			_clientSide = false;		
 		BIO*					_bio		= null;
 		bool					_ssl_status  = false;		
-	
+
+		ProxySSL				_proxy		=	null;
+
+
+		class ProxySSL
+		{
+			this(TcpWriteFinish cb , Object ob)
+			{
+				cur_suc = 0;
+				max_suc = 0;
+				origin_cb = cb;
+				origin_ob = ob;
+			}
+
+			Object				origin_ob;
+			TcpWriteFinish		origin_cb;
+			int					cur_suc;
+			int					max_suc;
+		}
+
 	}
 }
 

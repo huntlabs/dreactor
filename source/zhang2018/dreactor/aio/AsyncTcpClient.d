@@ -74,7 +74,8 @@ class AsyncTcpClient:AsyncTcpBase
 			log_error(host ~ ":" ~ strPort);
 			return false;
 		}
-		
+
+		_free = false;
 		_host = host;
 		_port = port;
 		_socket = new Socket(arr[0].family , arr[0].type , arr[0].protocol);
@@ -97,7 +98,16 @@ class AsyncTcpClient:AsyncTcpBase
 	override protected bool onEstablished()
 	{
 		_firstConnect = false;
-		poll.modEvent(this ,_socket.handle , _curEventType =  IOEventType.IO_EVENT_READ);
+
+		version(DREACTOR_OPENSSL)
+		{	
+			if(_ssl_ctx == null)
+				poll.modEvent(this ,_socket.handle , _curEventType =  IOEventType.IO_EVENT_READ);
+		}
+		else
+		{
+			poll.modEvent(this ,_socket.handle , _curEventType =  IOEventType.IO_EVENT_READ);
+		}
 		return doEstablished();
 	}
 
@@ -168,6 +178,12 @@ class AsyncTcpClient:AsyncTcpBase
 		{
 			_reconnect = poll.addTimer(&onReconnect , 3 * 1000 , WheelType.WHEEL_ONESHOT);
 		}
+		else
+		{
+			_firstConnect = true;
+		}
+
+
 		return _free;
 	}
 

@@ -64,7 +64,14 @@ extern(C)  int openssl_cb_write(BIO *b, const (char) * data, int len)
 	byte[] bydata = new byte[len];
 	memcpy(bydata.ptr , data , len);
 
-	if(base.doWrite0(bydata , null , null) < 0 )
+	++base._proxy.max_suc;
+
+	int ret = base.doWrite0(bydata , base._proxy , &base.doWrite_proxy_ssl);
+	if( ret > 0)
+	{
+		++base._proxy.cur_suc;
+	}
+	else if(ret < 0)
 	{
 		log_error("cb_write");
 		return -1;
