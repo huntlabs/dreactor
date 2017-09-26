@@ -40,7 +40,7 @@ final class AsyncTcpServer( T , A...): Event
 			return false;
 		}
 
-		_poll.addEvent(this , _acceptor.fd ,  IOEventType.IO_EVENT_READ);
+		_poll.addEvent(this , _acceptor.getSocket().handle ,  IOEventType.IO_EVENT_READ);
 
 		return true;
 	}
@@ -101,6 +101,11 @@ final class AsyncTcpServer( T , A...): Event
 	void close()
 	{
 		_isreadclose = true;
+	}
+
+	Socket getSocket()
+	{
+		return _acceptor.getSocket();
 	}
 
 	protected bool isReadyClose()

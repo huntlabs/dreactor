@@ -285,10 +285,6 @@ class AsyncTcpBase:Event
 
 
 
-	int getFd()
-	{
-		return _socket.handle;
-	}
 	
 	protected bool isReadyClose()
 	{
@@ -465,6 +461,11 @@ class AsyncTcpBase:Event
 	void setSocket(Socket socket)
 	{
 		_socket = socket;
+	}
+
+	Socket getSocket()
+	{
+		return _socket;
 	}
 
 	version(DREACTOR_OPENSSL)

@@ -7,6 +7,8 @@
 
 module zhang2018.dreactor.event.Event;
 
+import std.socket;
+
 enum IOEventType
 {
 	IO_EVENT_NONE = 0,
@@ -21,6 +23,7 @@ interface Event
 	bool onWrite();
     bool onRead();
     bool onClose();
+	Socket getSocket();
 
 	bool isReadyClose();
 }

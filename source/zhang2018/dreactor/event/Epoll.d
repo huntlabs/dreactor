@@ -15,6 +15,7 @@ import zhang2018.common.Log;
 import std.conv;
 import std.stdio;
 import std.string;
+import std.socket;
 
 import core.thread;
 import core.stdc.errno;
@@ -227,7 +228,8 @@ final class Epoll :Thread , Poll
 			int err = errno();
 			if(err == EINTR)
 			{	
-			
+				string errstr = cast(string)fromStringz(strerror(err));
+				log_info(err , " epoll error 0 " , errstr);
 				return true;
 			}
 
@@ -240,7 +242,6 @@ final class Epoll :Thread , Poll
 			return true;
 		}
 
-	
 
 		for(int i = 0 ; i < result ; i++)
 		{
@@ -258,9 +259,12 @@ final class Epoll :Thread , Poll
 
 			if(mask &( EPOLL_EVENTS.EPOLLERR | EPOLL_EVENTS.EPOLLHUP))
 			{
-				auto err = errno();
-				string errstr = cast(string)fromStringz(strerror(err));
-				log_error(err , " epoll error " , errstr);
+				int err_code;
+				auto sock = event.getSocket();
+				sock.getOption(SocketOptionLevel.SOCKET , SocketOption.ERROR ,err_code);
+				log_error(" epoll error " , result , " " , sock.handle , " " 
+					, cast(string)fromStringz(strerror(err_code)));
+
 				if(event.onClose())
 					delete event;
 				continue;

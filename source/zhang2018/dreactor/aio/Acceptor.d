@@ -59,10 +59,9 @@ final package class Acceptor
 		_socket.close();
 	}
 
-	@property
-	int fd() 
+	Socket getSocket()
 	{
-		return _socket.handle;
+		return _socket;
 	}
 
 

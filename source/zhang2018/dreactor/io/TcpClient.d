@@ -167,7 +167,9 @@ class TcpClient
 			{
 				if(eset.isSet(_socket.handle))
 				{
-					log_error("error eset");
+					int result;
+					_socket.getOption(SocketOptionLevel.SOCKET , SocketOption.ERROR ,result);
+					log_error("error eset " , result);
 					return IO_Result.RESULT_IO_NET_ERROR;
 				}
 				else if(state == IO_State.IO_CONNECTED && wset.isSet(_socket.handle))

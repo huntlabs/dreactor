@@ -25,7 +25,8 @@ void init_openssl_lib()
 extern(C)  int openssl_cb_read(BIO *b , char *data , int len)
 {
 	AsyncTcpBase base = cast(AsyncTcpBase)b.ptr;
-	int read_len = cast(int)recv(base.getFd() , data , len ,0);
+	auto fd = base.getSocket().handle;
+	int read_len = cast(int)recv(fd , data , len ,0);
 	BIO_clear_retry_flags(b);
 	if(read_len <= 0)
 	{
