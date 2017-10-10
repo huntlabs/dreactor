@@ -9,6 +9,13 @@ module zhang2018.dreactor.event.Poll;
 import zhang2018.dreactor.event.Event;
 import zhang2018.dreactor.time.Timer;
 
+__gshared static this(){
+
+	import core.sys.posix.signal;
+	signal(SIGPIPE, SIG_IGN);
+	signal(SIGHUP , SIG_IGN);
+	signal(SIGTERM , SIG_IGN);
+}
 
 alias PollFunc = void delegate();
 

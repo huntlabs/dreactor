@@ -194,8 +194,17 @@ final class Epoll :Thread , Poll
 
 	void run()
 	{
-		while(_flag)
-			poll(_timeout);
+		try{
+
+			while(_flag)
+				poll(_timeout);
+		
+		}
+		catch(Throwable e)
+		{
+			log_error(e.toString());
+		}
+
 	}
 
 

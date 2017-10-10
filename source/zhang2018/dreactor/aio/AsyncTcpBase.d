@@ -114,6 +114,12 @@ class AsyncTcpBase:Event
 
 	public int doWrite0(const byte[] writebuf , Object ob , TcpWriteFinish finish )
 	{
+
+			if(writebuf.length == 0)
+			{
+				return 1;
+			}
+
 			if(_writebuffer.empty())
 			{
 				long ret = _socket.send(writebuf);
@@ -139,6 +145,7 @@ class AsyncTcpBase:Event
 					}
 					//blocking rarely happened.
 					//log_warning("blocking rarely happened");
+					log_info("send -1 err : " , errno);
 					QueueBuffer buffer = {writebuf , ob , 0 , finish};
 					_writebuffer.insertBack(buffer);
 					schedule_write();
@@ -335,10 +342,11 @@ class AsyncTcpBase:Event
 				{
 					if(net_error())
 					{
-						log_error( "write net error");
+						log_error( "send net error");
 						close();
 						return false;
 					}
+					log_info("send -1 err : " , errno);
 					return true;
 				}
 
