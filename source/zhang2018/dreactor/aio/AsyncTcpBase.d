@@ -130,7 +130,7 @@ class AsyncTcpBase:Event
 				else if(ret > 0)
 				{
 					log_info("ret " , ret , " " , writebuf.length);
-					QueueBuffer buffer = {writebuf, ob , cast(int)ret , finish};
+					QueueBuffer buffer = {writebuf.dup, ob , cast(int)ret , finish};
 					_writebuffer.insertBack(buffer);
 				
 					schedule_write();
@@ -146,7 +146,7 @@ class AsyncTcpBase:Event
 					//blocking rarely happened.
 					//log_warning("blocking rarely happened");
 					log_info("send -1 err : " , errno);
-					QueueBuffer buffer = {writebuf , ob , 0 , finish};
+					QueueBuffer buffer = {writebuf.dup , ob , 0 , finish};
 					_writebuffer.insertBack(buffer);
 					schedule_write();
 				}
@@ -154,7 +154,7 @@ class AsyncTcpBase:Event
 			}
 			else
 			{
-				QueueBuffer buffer = {writebuf , ob , 0 , finish};
+				QueueBuffer buffer = {writebuf.dup , ob , 0 , finish};
 				_writebuffer.insertBack(buffer);
 			}	
 
@@ -510,7 +510,7 @@ class AsyncTcpBase:Event
 
 	private struct QueueBuffer
 	{
-		const byte[] 	buffer;
+		byte[] 			buffer;
 		Object 			ob;
 		int	   			index;
 		TcpWriteFinish	finish;
