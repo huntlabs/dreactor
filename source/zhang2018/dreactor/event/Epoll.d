@@ -180,11 +180,6 @@ final class Epoll :Thread , Poll
 
 	void start()
 	{
-		if(_flag)
-		{
-			log_warning("already started");
-			return ;
-		}
 		_flag = true;
 
 		super.start();
@@ -194,17 +189,15 @@ final class Epoll :Thread , Poll
 
 	void run()
 	{
-		try{
-
-			while(_flag)
+		while(_flag){	
+			try{
 				poll(_timeout);
-		
+			}
+			catch(Throwable e)
+			{
+				log_error(e.toString());
+			}
 		}
-		catch(Throwable e)
-		{
-			log_error(e.toString());
-		}
-
 	}
 
 
@@ -259,8 +252,8 @@ final class Epoll :Thread , Poll
 
 			if(event.isReadyClose())
 			{	
-				if(event.onClose())
-					delete event;
+				if(event.onClose()){}
+				//	delete event;
 				continue;
 			}
 
@@ -274,8 +267,8 @@ final class Epoll :Thread , Poll
 				log_error(" epoll error " , result , " " , sock.handle , " " 
 					, cast(string)fromStringz(strerror(err_code)));
 
-				if(event.onClose())
-					delete event;
+				if(event.onClose()){}
+				//	delete event;
 				continue;
 			}
 
@@ -283,8 +276,8 @@ final class Epoll :Thread , Poll
 			{
 				if(!event.onRead())
 				{
-					if(event.onClose())
-						delete event;
+					if(event.onClose()){}
+					//	delete event;
 					continue;
 				}
 			}
@@ -293,8 +286,8 @@ final class Epoll :Thread , Poll
 			{
 				if(!event.onWrite())
 				{
-					if(event.onClose())
-						delete event;
+					if(event.onClose()){}
+					//	delete event;
 					continue;
 				}
 			}
@@ -304,7 +297,7 @@ final class Epoll :Thread , Poll
 
 	private	bool[PollFunc]		_funcs;
 	private Event[int]  		_mapEvents;					//only for save. not gc.
-	private	bool				_flag;
+	private	bool				_flag = true;
 	private int					_timeout;
 	private int 				_efd;
 	private epoll_event[256] 	_pollEvents;

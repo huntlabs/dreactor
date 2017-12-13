@@ -166,8 +166,8 @@ final class Select : Thread , Poll
 						log_error("io_event_error");
 					}
 
-					if(!v.event.onClose())
-						delete v.event;	
+					if(!v.event.onClose()){}
+					//	delete v.event;	
 					continue;
 				}
 
@@ -182,8 +182,8 @@ final class Select : Thread , Poll
 
 					if(!v.event.onRead())
 					{
-						if(v.event.onClose())
-							delete v.event;	
+						if(v.event.onClose()){}
+						//	delete v.event;	
 						continue;
 					}
 				}
@@ -197,8 +197,8 @@ final class Select : Thread , Poll
 
 					if(!v.event.onWrite())
 					{
-						if(v.event.onClose())
-							delete v.event;
+						if(v.event.onClose()){}
+						//	delete v.event;
 						continue;
 					}
 				}
@@ -214,8 +214,16 @@ final class Select : Thread , Poll
 
 	void run()
 	{
-		while(_flag)
-			poll(_timeout);
+
+		while(_flag){
+			try{
+				poll(_timeout);
+			}
+			catch(Throwable e)
+			{
+				log_error(e.toString());
+			}		
+		}
 	}
 
 
@@ -244,11 +252,6 @@ final class Select : Thread , Poll
 	// thread 
 	void start()
 	{
-		if(_flag)
-		{
-			log_error("already started");
-			return ;
-		}
 		_flag = true;
 		
 		super.start();
@@ -266,7 +269,7 @@ final class Select : Thread , Poll
 	SocketSet 							_rset;
 	SocketSet 							_wset;
 	SocketSet 							_eset;
-	bool								_flag;
+	bool								_flag = true;
 	int									_maxfd;
 	private	int							_timeout;
 	private Data[socket_t]				_mapevents;

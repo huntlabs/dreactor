@@ -62,7 +62,9 @@ class AsyncTcpBase:Event
 	}
 
 
-
+	// 0  		write_to_buff
+	// 1  		suc
+	// -1		failed
 	public int doWrite(const byte[] writebuf , Object ob , TcpWriteFinish finish)
 	{
 		synchronized(this){
@@ -163,7 +165,7 @@ class AsyncTcpBase:Event
 
 	public void close()
 	{
-		log_info("ready to close");
+		//log_info("ready to close");
 		if(!_isreadclose)
 		{
 			_isreadclose = true;
